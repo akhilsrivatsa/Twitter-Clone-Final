@@ -22,6 +22,14 @@ init_all_services() ->
     {"register_user", Username, Password} ->
       io:format("Registering User ~p ~n", [Username]),
       my_api_caller! {"register_user", Username, Password},
+      init_all_services();
+    {"login_user", Username, Password} ->
+      io:format("Login User ~p ~n", [Username]),
+      my_api_caller ! {"login_user", Username, Password},
+      init_all_services();
+    {"logoff_user", Username, Password} ->
+      io:format("LogOff User ~p ~n", [Username]),
+      my_api_caller ! {"logoff_user", Username, Password},
       init_all_services()
   end.
 

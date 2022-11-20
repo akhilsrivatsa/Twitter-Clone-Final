@@ -16,7 +16,7 @@
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
-  code_change/3, api_handler/0, init_all_tables/ 0, user_registration_service / 2]).
+  code_change/3, api_handler/0, init_all_tables/ 0, user_registration_service / 2, fell/0]).
 
 -define(SERVER, ?MODULE).
 
@@ -25,6 +25,9 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+fell()->
+  io:format("fck").
 
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -49,7 +52,19 @@ api_handler() ->
   receive
     {"register_user", Username, Password} ->
       Res = user_registration_service(Username, Password),
-      io:format("Result is ~p ~n", [Res]),
+      io:format("User - ~p ~n", [Res]),
+      api_handler();
+    {"login_user", Username, Password} ->
+      io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
+      Res = user_login_service(Username, Password),
+      io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
+      io:format("User ~p - ~p ~n", [Username,Res]),
+      api_handler();
+    {"logoff_user", Username, Password} ->
+      io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
+      Res = user_logoff_service(Username, Password),
+      io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
+      io:format("User ~p - ~p ~n", [Username,Res]),
       api_handler()
   end.
 
@@ -63,6 +78,33 @@ user_registration_service(Username, Password)->
     user_registered
   end.
 
+user_login_service(Username, Password) ->
+
+  Res = ets:lookup(user_accounts, Username),
+  if length(Res) > 0 ->
+    {Us, Pw, St} = lists:nth(1, Res),
+    if Pw == Password ->
+      ets:insert(user_accounts, {Username, Password, "online"}),
+      user_logged_in;
+      true ->
+        Us,
+        St,
+        invalid_credentials
+    end;
+    true ->
+      io:format("User Doesn't exist ~n"),
+      user_does_not_exist
+  end.
+
+user_logoff_service(Username, Password) ->
+  Res = ets:lookup(user_accounts, Username),
+  if length(Res) > 0 ->
+    ets:insert(user_accounts, {Username, Password, "offline"}),
+    user_logged_off;
+    true ->
+      io:format("User Doesn't exist ~n"),
+      user_does_not_exist
+  end.
 
 handle_call(_Request, _From, State = #main_server_state{}) ->
   io:format("Called...."),
