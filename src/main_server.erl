@@ -16,7 +16,7 @@
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
-  code_change/3, api_handler/0, init_all_tables/ 0, user_registration_service / 2, fell/0]).
+  code_change/3, api_handler/0, init_all_tables/ 0, user_registration_service / 2, fell/0, trelln/0]).
 
 -define(SERVER, ?MODULE).
 
@@ -25,6 +25,9 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+trelln()->
+  io:format("red").
 
 fell()->
   io:format("fck").
@@ -65,8 +68,55 @@ api_handler() ->
       Res = user_logoff_service(Username, Password),
       io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
       io:format("User ~p - ~p ~n", [Username,Res]),
+      api_handler();
+    {"user_follow", Username1, Username2} ->
+      io:format("User Follow Table is ~p ~n", [ets:lookup(follower_store, Username1)]),
+      Res = user_follow_service(Username1, Username2),
+      io:format("User Follow Table is ~p ~n", [ets:lookup(follower_store, Username1)]),
+      io:format("User ~p User ~p - ~p ~n", [Username1,Username2,Res]),
+      api_handler();
+    {"send_tweet", Username, Tweet} ->
+      io:format("Username ~p tweeted ~p ~n", [Username, Tweet]),
+      Res = user_sending_tweet(Username, Tweet),
+      io:format("User ~p sent Tweet ~p  ~p ~n", [Username, Tweet, Res]),
       api_handler()
   end.
+
+is_user_logged_in(Username) ->
+  Res = ets:lookup(user_accounts, Username),
+  if length(Res) > 0 ->
+    {Us, Pw, St} = lists:nth(1, Res),
+    Us, Pw,
+    if St == "offline" -> user_offline;
+    true -> true
+    end;
+    true -> io:format("Username ~p not found ~n", [Username]),
+            user_not_found
+  end.
+
+
+
+user_sending_tweet(Username, Tweet) ->
+   Res = is_user_logged_in(Username),
+  if Res == true ->
+    io:format("Username ~p and Tweet ~p ~n", [Username, Tweet]);
+    true -> user_offline_or_invalid_tweet_cant_be_delivered
+  end.
+
+
+user_follow_service(Username1, Username2) ->
+  Res2 = ets:lookup(user_accounts, Username1),
+  Res1 = ets:lookup(user_accounts, Username2),
+  Res2,
+  if ( length(Res1) /= 0  andalso length(Res2) /= 0 ) ->
+    io:format("Both Users are valid ~n"),
+    ets:insert(follower_store, {Username1, Username2}),
+    user1_follows_user2;
+  true->
+    io:format("Unable to make follow connection in follower_store table ~n"),
+    user1_or_user2_not_found
+  end.
+
 
 
 user_registration_service(Username, Password)->

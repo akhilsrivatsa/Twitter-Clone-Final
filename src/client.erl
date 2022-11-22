@@ -30,6 +30,14 @@ init_all_services() ->
     {"logoff_user", Username, Password} ->
       io:format("LogOff User ~p ~n", [Username]),
       my_api_caller ! {"logoff_user", Username, Password},
+      init_all_services();
+    {"user_follow", Username1, Username2} ->
+      io:format("User Follow ~p ~p ~n", [Username1, Username2]),
+      my_api_caller ! {"user_follow", Username1, Username2},
+      init_all_services();
+    {"send_tweet", Username, Tweet} ->
+      io:format("User ~p Tweet ~p ~n", [Username, Tweet]),
+      my_api_caller ! {"send_tweet", Username, Tweet},
       init_all_services()
   end.
 
