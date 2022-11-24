@@ -38,6 +38,14 @@ init_all_services() ->
     {"send_tweet", Username, Tweet} ->
       io:format("User ~p Tweet ~p ~n", [Username, Tweet]),
       my_api_caller ! {"send_tweet", Username, Tweet},
+      init_all_services();
+    {"get_all_mentions", Mention_String} ->
+      io:format("Searching for String ~p ~n", [Mention_String]),
+      my_api_caller ! {"search_for_mentions", Mention_String},
+      init_all_services();
+    {"get_all_hashtags", Mention_String} ->
+      io:format("Searching for String ~p ~n", [Mention_String]),
+      my_api_caller ! {"search_for_hashtags", Mention_String},
       init_all_services()
   end.
 
