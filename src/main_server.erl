@@ -18,6 +18,7 @@
   code_change/3, api_handler/0, init_all_tables/ 0, user_registration_service / 2]).
 
 -define(SERVER, ?MODULE).
+-define(PORT, 9000).
 
 -record(main_server_state, {}).
 
@@ -32,10 +33,43 @@ start_link() ->
 %%% gen_server callbacks
 %%%===================================================================
 
+handler(ASocket) ->
+  inet:setopts(ASocket, [{active, once}] ),
+  receive
+    {tcp, ASocket, BinaryMsg} ->
+      if
+        (BinaryMsg =:= <<"New Client Available">>) ->
+          gen_tcp:send(ASocket);
+        true ->
+          gen_tcp:send(ASocket, "Message Received from client"),
+          io:format("Received Ping ~p ~n", [BinaryMsg])
+      end,
+      handler(ASocket)
+  end.
+
+
+accept_state(LSocket) ->
+  {ok, ASocket} = gen_tcp:accept(LSocket),
+  spawn(fun() -> accept_state(LSocket) end),
+  handler(ASocket).
+
+
+init_tcp() ->
+  PID =  spawn_link(fun() ->
+    {ok, LSocket} = gen_tcp:listen(?PORT, [binary, {active, false}]),
+    spawn( fun() -> accept_state(LSocket) end),
+    timer:sleep(infinity)
+                    end),
+  {ok, PID}.
+
+
 init([]) ->
+
   init_all_tables(),
   PID = spawn(?MODULE, api_handler, []),
   register(my_api_caller, PID),
+  init_tcp(),
+
   {ok, #main_server_state{}}.
 
 init_all_tables() ->
@@ -132,7 +166,6 @@ get_all_mentions(Tweet) ->
 
 get_all_hashtags(Tweet) ->
   F = re:run(Tweet, "(?<=#)\\w+", [global, {capture,all, list}]),
-
   if F /= nomatch ->
     {match, HashTags} = F,
     HashTag_List = construct_list(length(HashTags), HashTags, []),
@@ -150,9 +183,7 @@ update_mentions_table(Username, Tweet, TweetMentions) ->
     fun(Mention) ->
       io:format("Mention ~p ~n", [Mention]),
      ets:insert(mentions_hashtags, {{Mention, "MENTION"}, Tweet, Username})
-    end, TweetMentions),
-  Res = ets:lookup(mentions_hashtags, {"imVKohli", "MENTION"}),
-  io:format("res ~p ~n", [Res]).
+    end, TweetMentions).
 
 update_hashtags_table(Username, Tweet, TweetHashTags) ->
   io:format("UPDATING HASHTAGS TABLE ~n"),
@@ -202,7 +233,6 @@ user_registration_service(Username, Password)->
   end.
 
 user_login_service(Username, Password) ->
-
   Res = ets:lookup(user_accounts, Username),
   if length(Res) > 0 ->
     {Us, Pw, St} = lists:nth(1, Res),

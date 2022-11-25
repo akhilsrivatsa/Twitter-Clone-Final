@@ -10,9 +10,13 @@
 -author("akhil").
 -export([start/0, init_all_services/0]).
 
+
+-define(IP_ADDRESS,"").
+
 %% API
 
 start() ->
+
   PID = spawn(?MODULE, init_all_services, []),
   register(init_services, PID),
   do_nothing.
@@ -21,7 +25,10 @@ init_all_services() ->
   receive
     {"register_user", Username, Password} ->
       io:format("Registering User ~p ~n", [Username]),
-      my_api_caller! {"register_user", Username, Password},
+      {ok, ParsedAddress} = inet:parse_address(?IP_ADDRESS),
+      {ok, Socket} = gen_tcp:connect(ParsedAddress, 9000, [binary,{active, true}]),
+      gen_tcp:send(gen_tcp:send(Socket, {"register_user", Username, Password})),
+      % my_api_caller! {"register_user", Username, Password},
       init_all_services();
     {"login_user", Username, Password} ->
       io:format("Login User ~p ~n", [Username]),
