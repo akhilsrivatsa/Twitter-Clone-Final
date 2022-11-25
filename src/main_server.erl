@@ -32,18 +32,16 @@ start_link() ->
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-
 handler(ASocket) ->
   inet:setopts(ASocket, [{active, once}] ),
   receive
-    {tcp, ASocket, BinaryMsg} ->
-      if
-        (BinaryMsg =:= <<"New Client Available">>) ->
-          gen_tcp:send(ASocket);
-        true ->
-          gen_tcp:send(ASocket, "Message Received from client"),
-          io:format("Received Ping ~p ~n", [BinaryMsg])
-      end,
+    {tcp,ASocket,BinaryMsg} ->
+      io:format("Here ~p ~n", [BinaryMsg]),
+      Msg = string:split(BinaryMsg, ",", all),
+      B=  [binary_to_list(Item) || Item <- Msg],
+      BList = lists:append(B, [ASocket]),
+      Tuple = list_to_tuple(BList),
+      my_api_caller ! Tuple,
       handler(ASocket)
   end.
 
@@ -68,6 +66,7 @@ init([]) ->
   init_all_tables(),
   PID = spawn(?MODULE, api_handler, []),
   register(my_api_caller, PID),
+  io:format("Inited"),
   init_tcp(),
 
   {ok, #main_server_state{}}.
@@ -80,42 +79,40 @@ init_all_tables() ->
 
 api_handler() ->
   receive
-    {"register_user", Username, Password} ->
+    {"register_user", Username, Password, ASocket} ->
       Res = user_registration_service(Username, Password),
-      io:format("User - ~p ~n", [Res]),
+      %Response = Username ++ " " ++ Res ,
+      gen_tcp:send(ASocket, atom_to_list(Res) ),
       api_handler();
-    {"login_user", Username, Password} ->
-      io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
+    {"login_user", Username, Password, ASocket} ->
       Res = user_login_service(Username, Password),
-      io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
-      io:format("User ~p - ~p ~n", [Username,Res]),
+      gen_tcp:send(ASocket, atom_to_list(Res)),
       api_handler();
-    {"logoff_user", Username, Password} ->
+    {"logoff_user", Username, Password, ASocket} ->
       io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
       Res = user_logoff_service(Username, Password),
-      io:format("User Account Table is ~p ~n", [ets:lookup(user_accounts, Username)]),
-      io:format("User ~p - ~p ~n", [Username,Res]),
+      gen_tcp:send(ASocket, atom_to_list(Res)),
       api_handler();
-    {"user_follow", Username1, Username2} ->
+    {"user_follow", Username1, Username2, ASocket} ->
       io:format("User Follow Table is ~p ~n", [ets:lookup(follower_store, Username2)]),
       Res = user_follow_service(Username1, Username2),
-      io:format("User Follow Table is ~p ~n", [ets:lookup(follower_store, Username2)]),
-      io:format("User ~p User ~p - ~p ~n", [Username1,Username2,Res]),
+      gen_tcp:send(ASocket, atom_to_list(Res)),
       api_handler();
-    {"send_tweet", Username, Tweet} ->
+    {"send_tweet", Username, Tweet, ASocket} ->
       io:format("Username ~p tweeted ~p ~n", [Username, Tweet]),
       Res = user_sending_tweet(Username, Tweet),
-      io:format("User ~p sent Tweet ~p  ~p ~n", [Username, Tweet, Res]),
+      gen_tcp:send(ASocket, atom_to_list(Res)),
       api_handler();
-    {"search_for_mentions", Search_String} ->
+    {"search_for_mentions", Search_String, ASocket} ->
       io:format("Search for String ~p ~n", [Search_String]),
       Res = query_tweets_with_mentions(Search_String),
-      io:format("All ~p Mentioned Tweets ~p ~n", [Search_String, Res]),
+      io:format("Res ~p ~n", [Res]),
+      gen_tcp:send(ASocket, lists:flatten(io_lib:format("~p",[Res]))),
       api_handler();
-    {"search_for_hashtags", Search_String} ->
+    {"search_for_hashtags", Search_String, ASocket} ->
       io:format("Search for String ~p ~n", [Search_String]),
       Res = query_tweets_with_hashtags(Search_String),
-      io:format("All ~p Hashtagged Tweets ~p ~n", [Search_String, Res]),
+      gen_tcp:send(ASocket, lists:flatten(io_lib:format("~p",[Res]))),
       api_handler()
   end.
 
