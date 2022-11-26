@@ -85,7 +85,7 @@ api_handler() ->
       gen_tcp:send(ASocket, atom_to_list(Res) ),
       api_handler();
     {"login_user", Username, Password, ASocket} ->
-      Res = user_login_service(Username, Password),
+      Res = user_login_service(Username, Password, ASocket),
       gen_tcp:send(ASocket, atom_to_list(Res)),
       api_handler();
     {"logoff_user", Username, Password, ASocket} ->
@@ -128,7 +128,7 @@ query_tweets_with_hashtags(Search_String) ->
 is_user_logged_in(Username) ->
   Res = ets:lookup(user_accounts, Username),
   if length(Res) > 0 ->
-    {Us, Pw, St} = lists:nth(1, Res),
+    {Us, Pw, St, _} = lists:nth(1, Res),
     Us, Pw,
     if St == "offline" -> user_offline;
     true -> true
@@ -171,9 +171,6 @@ get_all_hashtags(Tweet) ->
           HashTag_List
   end.
 
-
-
-
 update_mentions_table(Username, Tweet, TweetMentions) ->
   io:format("UPDATING MENTIONS TABLE ~n"),
   lists:foreach(
@@ -189,6 +186,83 @@ update_hashtags_table(Username, Tweet, TweetHashTags) ->
       ets:insert(mentions_hashtags, {{Mention, "HASHTAG"}, Tweet, Username})
     end, TweetHashTags).
 
+fetch_all_followers_list(0, Followers, OnlineUserList) ->
+  Followers,
+  OnlineUserList;
+
+fetch_all_followers_list(Index, Followers, OnlineUserList) ->
+  io:format("Followers are ~p ~n", [Followers]),
+  {_,Follower} = lists:nth(Index, Followers),
+  fetch_all_followers_list(Index - 1, Followers, lists:append(OnlineUserList, [Follower])).
+
+fetch_all_Online_Users_With_Port(0, Followers_List, Online_Users) ->
+  Followers_List,
+  Online_Users;
+
+fetch_all_Online_Users_With_Port(Index, Followers_List, Online_Users) ->
+  io:format("Fetch all online users with Port ~n"),
+  Follower  = lists:nth(Index, Followers_List),
+  Res = ets:lookup(user_accounts, Follower),
+  {User, Password, Status, Port}= lists:nth(1, Res),
+  Password,
+  if Status == "online" ->
+    fetch_all_Online_Users_With_Port(Index - 1, Followers_List, lists:append(Online_Users, [{User, Port}]));
+  true ->
+    fetch_all_Online_Users_With_Port(Index - 1, Followers_List, Online_Users)
+  end.
+
+get_all_followers_of_user(Username) ->
+  io:format("Fetching all followers of ~p ~n", [Username]),
+  Followers_Tuple_List = ets:lookup(follower_store, Username),
+  Followers_List = fetch_all_followers_list(length(Followers_Tuple_List), Followers_Tuple_List, []),
+  io:format("All Followers of User ~p are ~p ~n",[Username, Followers_List]),
+  Online_Followers_List = fetch_all_Online_Users_With_Port(length(Followers_List), Followers_List, []),
+  Online_Followers_List.
+
+
+send_tweet(0, Tweet, Followers, Username) ->
+  Tweet, Followers, Username,
+  end_recursive_loop;
+
+
+send_tweet(Index, Tweet, Followers, Username) ->
+  {Follower, Port} = lists:nth(Index, Followers),
+  Follower,
+  String = Username ++ " tweeted: ~n" ++ Tweet,
+  io:format("Sending Tweet to User ~p sitting on port ~p ~n", [Follower, Port]),
+  gen_tcp:send(Port, String),
+  send_tweet(Index - 1, Tweet, Followers, Username).
+
+send_tweet_to_all_online_followers(Username, Tweet) ->
+  Followers = get_all_followers_of_user(Username),
+  io:format("Followers of User ~p are ~p ~n", [Username, Followers]),
+  send_tweet(length(Followers), Tweet, Followers, Username).
+
+
+send_tweet_to_all_mentions(0, Username, Tweet, TweetMentions) ->
+  Username, Tweet, TweetMentions,
+  end_of_mentions_loop;
+
+send_tweet_to_all_mentions(Index,Username, Tweet, TweetMentions) ->
+  Mention = lists:nth(Index, TweetMentions),
+  io:format("sending tweet to Mention ~p ~n", [Mention]),
+  Res = ets:lookup(user_accounts, Mention),
+  if length(Res) > 0 ->
+      {User, Password, Status, Port} = lists:nth(1, Res),
+      if Status == "online" ->
+        io:format("User is online ~n"),
+        String = Username ++ " tweeted: ~n" ++ Tweet,
+        Password,
+        io:format("Sending Tweet to User ~p sitting on port ~p ~n", [User, Port]),
+        gen_tcp:send(Port, String),
+        send_tweet_to_all_mentions(Index - 1, User, Tweet, TweetMentions);
+
+        true -> io:format("Always true")
+      end;
+    true -> io:format("Mention ~p is not present in the user table ~n", [Mention]),
+           send_tweet_to_all_mentions(Index - 1, Username, Tweet, TweetMentions)
+  end.
+
 user_sending_tweet(Username, Tweet) ->
    Res = is_user_logged_in(Username),
   if Res == true ->
@@ -197,6 +271,8 @@ user_sending_tweet(Username, Tweet) ->
     Tweet_Hashtags = get_all_hashtags(Tweet),
     update_mentions_table(Username, Tweet, Tweet_Mentions),
     update_hashtags_table(Username, Tweet, Tweet_Hashtags),
+    send_tweet_to_all_online_followers(Username, Tweet),
+    send_tweet_to_all_mentions(length(Tweet_Mentions), Username, Tweet, Tweet_Mentions),
 
     io:format("Tweet Mention ~p ~n", [Tweet_Mentions]),
     io:format("Tweet Hashtags ~p ~n", [Tweet_Hashtags]);
@@ -225,16 +301,16 @@ user_registration_service(Username, Password)->
   if length(Res) > 0 ->
     user_already_exists;
   true ->
-    ets:insert(user_accounts, {Username, Password, "offline"}),
+    ets:insert(user_accounts, {Username, Password, "offline", ""}),
     user_registered
   end.
 
-user_login_service(Username, Password) ->
+user_login_service(Username, Password, ASocket) ->
   Res = ets:lookup(user_accounts, Username),
   if length(Res) > 0 ->
-    {Us, Pw, St} = lists:nth(1, Res),
+    {Us, Pw, St, _} = lists:nth(1, Res),
     if Pw == Password ->
-      ets:insert(user_accounts, {Username, Password, "online"}),
+      ets:insert(user_accounts, {Username, Password, "online", ASocket}),
       user_logged_in;
       true ->
         Us,
@@ -249,7 +325,7 @@ user_login_service(Username, Password) ->
 user_logoff_service(Username, Password) ->
   Res = ets:lookup(user_accounts, Username),
   if length(Res) > 0 ->
-    ets:insert(user_accounts, {Username, Password, "offline"}),
+    ets:insert(user_accounts, {Username, Password, "offline", ""}),
     user_logged_off;
     true ->
       io:format("User Doesn't exist ~n"),
