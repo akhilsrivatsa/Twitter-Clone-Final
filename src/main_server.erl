@@ -75,8 +75,9 @@ init_all_tables() ->
   ets:new(user_accounts, [set, named_table, public]),
   ets:new(user_tweets, [bag, named_table, public]),
   ets:new(mentions_hashtags, [bag, named_table, public]),
-  ets:new(follower_store, [bag, named_table, public]).
-
+  ets:new(follower_store, [bag, named_table, public]),
+  ets:new(tweet_counter, [bag, named_table, public]),
+  ets:insert(tweet_counter, {"last_updated_counter", 0}).
 api_handler() ->
   receive
     {"register_user", Username, Password, ASocket} ->
@@ -113,6 +114,12 @@ api_handler() ->
       io:format("Search for String ~p ~n", [Search_String]),
       Res = query_tweets_with_hashtags(Search_String),
       gen_tcp:send(ASocket, lists:flatten(io_lib:format("~p",[Res]))),
+      api_handler();
+    {"retweet", Username, Tweet_Id, ASocket} ->
+      io:format("Username ~p retweeted Tweet_Id ~p ~n", [Username, Tweet_Id]),
+      {_, Tweet, _} = lists:nth(1,ets:lookup(user_tweets, list_to_integer(Tweet_Id))),
+      send_tweet_to_all_online_followers(Username,Tweet),
+      gen_tcp:send(ASocket, lists:flatten("Retweet operation sucessful ~n")),
       api_handler()
   end.
 
@@ -230,12 +237,12 @@ send_tweet(Index, Tweet, Followers, Username) ->
   Follower,
   String = Username ++ " tweeted: ~n" ++ Tweet,
   io:format("Sending Tweet to User ~p sitting on port ~p ~n", [Follower, Port]),
+  io:format("Output String ~p ~n", [String]),
   gen_tcp:send(Port, String),
   send_tweet(Index - 1, Tweet, Followers, Username).
 
 send_tweet_to_all_online_followers(Username, Tweet) ->
   Followers = get_all_followers_of_user(Username),
-  io:format("Followers of User ~p are ~p ~n", [Username, Followers]),
   send_tweet(length(Followers), Tweet, Followers, Username).
 
 
@@ -269,6 +276,11 @@ user_sending_tweet(Username, Tweet) ->
     io:format("Username ~p and Tweet ~p ~n", [Username, Tweet]),
     Tweet_Mentions = get_all_mentions(Tweet),
     Tweet_Hashtags = get_all_hashtags(Tweet),
+    {"last_updated_counter", Last_Counter} = lists:nth(1, ets:lookup(tweet_counter, "last_updated_counter")),
+    Current_Counter = Last_Counter + 1,
+    ets:insert(user_tweets, {Current_Counter, Tweet, Username}),
+    ets:insert(tweet_counter, {"last_updated_counter",Last_Counter + 1}),
+    ets:lookup(user_tweets, Last_Counter + 1),
     update_mentions_table(Username, Tweet, Tweet_Mentions),
     update_hashtags_table(Username, Tweet, Tweet_Hashtags),
     send_tweet_to_all_online_followers(Username, Tweet),

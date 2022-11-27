@@ -105,6 +105,17 @@ init_all_services() ->
           io:format("The result received is ~p ~n", [Result])
       end,
       %my_api_caller ! {"search_for_hashtags", Mention_String},
+      init_all_services();
+    {"retweet", Username, Tweet_Id} ->
+      io:format("Username ~p has Retweeted ~p ~n", [Username, Tweet_Id]),
+      {ok, ParsedAddress} = inet:parse_address("10.20.0.119"),
+      {ok, Socket} = gen_tcp:connect(ParsedAddress, 9000, [binary,{active, true}]),
+      gen_tcp:send(Socket, ["retweet", ",", Username, ",", Tweet_Id]),
+      receive
+        {tcp,Socket, Result} ->
+          io:format("The result received is ~p ~n", [Result])
+      end,
+      %my_api_caller ! {"search_for_hashtags", Mention_String},
       init_all_services()
   end.
 
