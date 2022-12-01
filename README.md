@@ -37,7 +37,7 @@ More detail in the lecture as the project progresses.
 
 ## **Twitter High Level Architecture**
 
-![](/Users/akhil/Downloads/Twitter Arhcitecture.drawio.png)
+![](Screenshot 2022-12-01 at 3.51.53 PM.png)
 
 
 ## **File Structure and Application Details**
@@ -97,6 +97,48 @@ Depending upon the parameter "percentage of users to disconnect", the users are 
 **Please note that, the no.of users that will be disconnected will always be less than "percentage of users to disconnect".**
 
 
-Performance Graphs - 
+## **Performance Graphs -**
 
-WIP
+
+![](Screenshot 2022-12-01 at 4.29.37 PM.png)
+
+
+
+
+The performance results are taken for the parameter - "no.of users to disconnect" = 0. This means that all the users in the system are
+active and the tweets will be delivered to all online users. The performance results will be much faster, when 
+the "**no.of users to disconnect > 0**" as the tweets will not have to be delivered to every subscribed user.
+
+
+The logic to distribute the work is on the server side. For our testing purposes, we are running both the client and server on the same 
+system.  We were able to test for a maximum of 2000 users, but we are confident that, in a real life scenario our system can scale up to 
+100x depending on the CPU power of the server,
+
+
+![](Screenshot 2022-12-01 at 3.46.36 PM.png)
+
+
+![](Screenshot 2022-12-01 at 3.50.07 PM.png)
+
+
+![](Screenshot 2022-12-01 at 3.51.53 PM.png)
+
+
+![](Screenshot 2022-12-01 at 3.56.08 PM.png)
+
+
+**Some Samples of Request/ Response -**
+
+
+![](Screenshot 2022-12-01 at 4.10.51 PM.png)
+
+![](Screenshot 2022-12-01 at 4.12.04 PM.png)
+
+![](Screenshot 2022-12-01 at 4.14.11 PM.png)
+
+![](Screenshot 2022-12-01 at 4.16.48 PM.png)
+
+![](Screenshot 2022-12-01 at 4.18.45 PM.png)
+
+![](Screenshot 2022-12-01 at 4.20.27 PM.png)
+
