@@ -46,7 +46,7 @@ Order of Command Execution -
 
 ## **Twitter High Level Architecture**
 
-![](Twitter Arhcitecture.drawio.png)
+![](Twitter_Arhcitecture.drawio.png)
 
 ## **File Structure and Application Details**
 
@@ -110,7 +110,7 @@ Depending upon the parameter "percentage of users to disconnect", the users are 
 ## **Performance Graphs -**
 
 
-![](Screenshot 2022-12-01 at 4.29.37 PM.png)
+![](Screenshot_2022-12-01_at_4.29.37_PM.png)
 
 
 
@@ -125,30 +125,30 @@ system.  We were able to test for a maximum of 2000 users, but we are confident 
 100x depending on the CPU power of the server,
 
 
-![](Screenshot 2022-12-01 at 3.46.36 PM.png)
+![](Screenshot_2022-12-01_at_3.46.36_PM.png)
 
 
-![](Screenshot 2022-12-01 at 3.50.07 PM.png)
+![](Screenshot_2022-12-01_at_3.50.07_PM.png)
 
 
-![](Screenshot 2022-12-01 at 3.51.53 PM.png)
+![](Screenshot_2022-12-01_at_3.51.53_PM.png)
 
 
-![](Screenshot 2022-12-01 at 3.56.08 PM.png)
+![](Screenshot_2022-12-01_at_3.56.08_PM.png)
 
 
 **Some Samples of Request/ Response -**
 
 
-![](Screenshot 2022-12-01 at 4.10.51 PM.png)
+![](Screenshot_2022-12-01_at_4.10.51_PM.png)
 
-![](Screenshot 2022-12-01 at 4.12.04 PM.png)
+![](Screenshot_2022-12-01_at_4.12.04_PM.png)
 
-![](Screenshot 2022-12-01 at 4.14.11 PM.png)
+![](Screenshot_2022-12-01_at_4.14.11 PM.png)
 
-![](Screenshot 2022-12-01 at 4.16.48 PM.png)
+![](Screenshot_2022-12-01_at_4.16.48_PM.png)
 
-![](Screenshot 2022-12-01 at 4.18.45 PM.png)
+![](Screenshot_2022-12-01_at_4.18.45_PM.png)
 
-![](Screenshot 2022-12-01 at 4.20.27 PM.png)
+![](Screenshot_2022-12-01_at_4.20.27_PM.png)
 
