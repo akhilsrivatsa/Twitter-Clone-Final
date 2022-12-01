@@ -3,6 +3,7 @@
 ## **Group members -**
 
 1 - Mayur Reddy Junnuthula (UFID - 36921238)
+
 2-  Akhil Srivatsa (UFID - 80826297)
 
 ## **Project Description**
@@ -37,8 +38,7 @@ More detail in the lecture as the project progresses.
 
 ## **Twitter High Level Architecture**
 
-![](Screenshot 2022-12-01 at 3.51.53 PM.png)
-
+![](Twitter Arhcitecture.drawio.png)
 
 ## **File Structure and Application Details**
 
