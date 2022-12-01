@@ -29,10 +29,18 @@ You need to measure various aspects of your simulator and report performance
 More detail in the lecture as the project progresses.
 
 
-## **Important Run Commands** 
+### **Steps to Run the project**
 
-1) client:start().
-2) main_server:start_link().
+- Our choice of IDE for the project is IntelliJ IDEA. Build the project and run it using the erlang console run configuration in IntelliJ IDEA with just default (zero) arguments and default settings.
+- Start the server side of the application with the command main_server in the erlang console
+- Start the client side of the application with the command  client:start() in the erlang console
+- Start the simulator using the command simulator:start_link() in the erlang console. You will be prompted to provide 3 inputs. Once the 
+  inputs are given, the program execution begins.
+
+Order of Command Execution - 
+
+1) main_server:start_link().
+2) client:start().
 3) simulator:start_link().
 
 
