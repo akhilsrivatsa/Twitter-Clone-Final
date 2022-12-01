@@ -49,7 +49,9 @@ As we can see in the above diagram, the Twitter system has been implemented usin
 This file contains the implementation details of the client. Once the project is compiled, the start function in the file can be 
 called using the command - "**client:start()**" which will start the client.  This function will spawn an actor process that is responsible for handling 
 all the requests from the client side and sending a request to the server. The response from the server will be printed here.
-The requests to the server are sent by opening a TCP connection with the server. 
+The requests to the server are sent by opening a TCP connection with the server. The client connects to the server using the ip address
+of the server. (Can be seen in Line 34 of the file)
+
 
 The requests to the client can be sent using the following commands - 
 
