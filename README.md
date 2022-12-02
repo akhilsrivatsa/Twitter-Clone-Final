@@ -110,8 +110,7 @@ Depending upon the parameter "percentage of users to disconnect", the users are 
 ## **Performance Graphs -**
 
 
-![](Screenshot_2022-12-01_at_4.29.37_PM.png)
-
+![](Screenshot_2022-12-01_at_8.08.32_PM.png)
 
 
 
@@ -124,18 +123,13 @@ The logic to distribute the work is on the server side. For our testing purposes
 system.  We were able to test for a maximum of 2000 users, but we are confident that, in a real life scenario our system can scale up to 
 100x depending on the CPU power of the server,
 
+![](Screenshot_2022-12-01_at_6.47.39_PM.png)
 
-![](Screenshot_2022-12-01_at_3.46.36_PM.png)
+![](Screenshot_2022-12-01_at_8.04.01_PM.png)
 
+![](Screenshot_2022-12-01_at_8.04.25_PM.png)
 
-![](Screenshot_2022-12-01_at_3.50.07_PM.png)
-
-
-![](Screenshot_2022-12-01_at_3.51.53_PM.png)
-
-
-![](Screenshot_2022-12-01_at_3.56.08_PM.png)
-
+![](Screenshot_2022-12-01_at_8.04.46_PM.png)
 
 **Some Samples of Request/ Response -**
 
